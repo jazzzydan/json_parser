@@ -2,20 +2,22 @@ package org.example;
 
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class JsonParser {
-
     public Object parse(String input) {
         if (input == null) return null;
+        if (input.startsWith("\"") && input.endsWith("\"")) return input.substring(1, input.length() - 1);
         if (input.matches("-?[0-9]+")) return Integer.valueOf(input);
         if (input.matches("-?\\d+(\\.\\d+)?")) return Double.valueOf(input);
         if (input.matches("true|false")) return Boolean.valueOf(input);
+        if (input.startsWith("[") && input.endsWith("]")) {
+            input = trim(input);
+            Object[] inputs = input.split(",");
+            return new ArrayList<>(Arrays.asList(inputs));
+        }
 
-
-
-        return null;
+        return "";
     }
 
     public Object parse(Reader input) {
@@ -23,6 +25,38 @@ public class JsonParser {
         return null;
     }
 
+    String trim(String json) {
+        String singleLineJson = stringifyJson(json);
+        singleLineJson = removeWrapper(singleLineJson);
+        StringBuilder trimmed = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int index = 0; index < singleLineJson.length(); index++) {
+            char currentChar = singleLineJson.charAt(index);
+
+            if (currentChar == '"') {
+                inQuotes = !inQuotes;
+                trimmed.append(currentChar);
+            } else if (currentChar != ' ') {
+                trimmed.append(currentChar);
+            } else if (inQuotes) {
+                trimmed.append(currentChar);
+            }
+        }
+        return trimmed.toString();
+    }
+
+    String stringifyJson(String json) {
+        return json.replaceAll("\\s+", " ").trim();
+    }
+
+    String removeWrapper(String singleLineJson) {
+        return singleLineJson.substring(1, singleLineJson.length() - 1).trim();
+    }
+
+    String[] split(String trimmedJson) {
+        return trimmedJson.split(",");
+    }
 
 }
 //    public Object parse(Reader input) {
@@ -65,40 +99,8 @@ public class JsonParser {
 //        int index = 0;
 //        return json.charAt(index) == '{' && json.charAt(json.length() - 1) == '}';
 //    }
-//
-//    String trim(String json) {
-//        String singleLineJson = stringifyJson(json);
-//        singleLineJson = removeWrapper(singleLineJson);
-//        StringBuilder trimmed = new StringBuilder();
-//        boolean inQuotes = false;
-//
-//        for (int index = 0; index < singleLineJson.length(); index++) {
-//            char currentChar = singleLineJson.charAt(index);
-//
-//            if (currentChar == '"') {
-//                inQuotes = !inQuotes;
-//                trimmed.append(currentChar);
-//            } else if (currentChar != ' ') {
-//                trimmed.append(currentChar);
-//            } else if (inQuotes) {
-//                trimmed.append(currentChar);
-//            }
-//        }
-//        return trimmed.toString();
-//    }
-//
-//    String stringifyJson(String json) {
-//        return json.replaceAll("\\s+", " ").trim();
-//    }
-//
-//    String removeWrapper(String singleLineJson) {
-//        return singleLineJson.substring(1, singleLineJson.length() - 1).trim();
-//    }
-//
-//    String[] split(String trimmedJson) {
-//        return trimmedJson.split(",");
-//    }
-//
+
+
 //    Map<String, Object> jsonToMap(String[] keyValuePairs) {
 //        Map<String, Object> jsonMap = new HashMap<>();
 //        for (String keyValuePair : keyValuePairs) {
