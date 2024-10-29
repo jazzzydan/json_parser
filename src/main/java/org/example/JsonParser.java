@@ -1,64 +1,153 @@
 package org.example;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.*;
 
 public class JsonParser {
-    public Object parse(String input) {
-        if (input == null) return null;
-        if (input.startsWith("\"") && input.endsWith("\"")) return input.substring(1, input.length() - 1);
-        if (input.matches("-?[0-9]+")) return Integer.valueOf(input);
-        if (input.matches("-?\\d+(\\.\\d+)?")) return Double.valueOf(input);
-        if (input.matches("true|false")) return Boolean.valueOf(input);
-        if (input.startsWith("[") && input.endsWith("]")) {
-            input = trim(input);
-            Object[] inputs = input.split(",");
-            return new ArrayList<>(Arrays.asList(inputs));
+    private Reader input;
+    private char c;
+
+    //todo: rethink functionality for external char c
+
+    public JsonParser(Reader input) {
+        this.input = input;
+    }
+
+    public static Object parse(String input) {
+        try {
+            return new JsonParser(new StringReader(input)).parse();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
-        return "";
     }
 
-    public Object parse(Reader input) {
+    public Object parse() throws IOException {
+        var read = input.read();
+        var c = (char) read;
+        while (read != -1) {
+            if (Character.isWhitespace(c)) continue;
+//            else if (c == '{') return readObject(input);
+            else if (c == '[') return readList(input);
+            else if (c == '"') return readString(input);
+            else if (Character.isDigit(c) || c == '-') return readNumber(input, c);
+            else if (c == 't' || c == 'f') return readBoolean(input, c);
+            else if (c == 'n') return readNull(input);
+            else throw new IllegalArgumentException("Unexpected character: " + (char) c);
+        }
+        throw new IllegalArgumentException("Unexpected end");
 
-        return null;
     }
 
-    String trim(String json) {
-        String singleLineJson = stringifyJson(json);
-        singleLineJson = removeWrapper(singleLineJson);
-        StringBuilder trimmed = new StringBuilder();
-        boolean inQuotes = false;
+    private List<Object> readList(Reader input) throws IOException {
+        List<Object> list = new ArrayList<>();
+        char c = (char) input.read();
 
-        for (int index = 0; index < singleLineJson.length(); index++) {
-            char currentChar = singleLineJson.charAt(index);
+        while (c != ']') {
+            Object parsed = parse();
+            if (c == ',') {
 
-            if (currentChar == '"') {
-                inQuotes = !inQuotes;
-                trimmed.append(currentChar);
-            } else if (currentChar != ' ') {
-                trimmed.append(currentChar);
-            } else if (inQuotes) {
-                trimmed.append(currentChar);
+                 list.add(parsed);
+
+            }
+            c = (char) input.read();
+        }
+        return list;
+    }
+
+    private Number readNumber(Reader input, char firstChar) throws IOException {
+        StringBuilder numberString = new StringBuilder();
+        numberString.append(firstChar);
+        boolean hasDecimalPoint = (firstChar == '.');
+        char c = (char) input.read();
+        while (Character.isDigit(c) || c == '.') {
+            if (c == '.') {
+                if (hasDecimalPoint) {
+                    throw new IOException("Invalid number format: multiple decimal points");
+                }
+                hasDecimalPoint = true;
+            }
+            numberString.append(c);
+            c = (char) input.read();
+        }
+        if (hasDecimalPoint) {
+            return Double.valueOf(numberString.toString());
+        } else {
+            return Integer.valueOf(numberString.toString());
+        }
+    }
+
+    private String readString(Reader input) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        char c = (char) input.read();
+        while (c != '"') {
+            stringBuilder.append(c);
+            c = (char) input.read();
+        }
+        return stringBuilder.toString();
+    }
+
+    private Boolean readBoolean(Reader input, char firstChar) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(firstChar);
+        char c = (char) input.read();
+        while (Character.isAlphabetic(c)) {
+            stringBuilder.append(c);
+            c = (char) input.read();
+        }
+        String value = stringBuilder.toString();
+        if (value.equals("true")) return true;
+        else if (value.equals("false")) return false;
+        else throw new IOException("Invalid boolean value: " + value);
+    }
+
+    private Objects readNull(Reader input) throws IOException {
+        if (input.read() == 'u') {
+            if (input.read() == 'l') {
+                if (input.read() == 'l') {
+                    return null;
+                }
             }
         }
-        return trimmed.toString();
-    }
-
-    String stringifyJson(String json) {
-        return json.replaceAll("\\s+", " ").trim();
-    }
-
-    String removeWrapper(String singleLineJson) {
-        return singleLineJson.substring(1, singleLineJson.length() - 1).trim();
-    }
-
-    String[] split(String trimmedJson) {
-        return trimmedJson.split(",");
+        throw new IllegalArgumentException("Unexpected character: " + (char) input.read());
     }
 
 }
+//    String trim(String json) {
+//        String singleLineJson = stringifyJson(json);
+//        singleLineJson = removeWrapper(singleLineJson);
+//        StringBuilder trimmed = new StringBuilder();
+//        boolean inQuotes = false;
+//
+//        for (int index = 0; index < singleLineJson.length(); index++) {
+//            char currentChar = singleLineJson.charAt(index);
+//
+//            if (currentChar == '"') {
+//                inQuotes = !inQuotes;
+//                trimmed.append(currentChar);
+//            } else if (currentChar != ' ') {
+//                trimmed.append(currentChar);
+//            } else if (inQuotes) {
+//                trimmed.append(currentChar);
+//            }
+//        }
+//        return trimmed.toString();
+//    }
+//
+//    String stringifyJson(String json) {
+//        return json.replaceAll("\\s+", " ").trim();
+//    }
+//
+//    String removeWrapper(String singleLineJson) {
+//        return singleLineJson.substring(1, singleLineJson.length() - 1).trim();
+//    }
+//
+//    String[] split(String trimmedJson) {
+//        return trimmedJson.split(",");
+//    }
+
+
 //    public Object parse(Reader input) {
 //
 //        return null;

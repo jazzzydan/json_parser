@@ -9,42 +9,45 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JsonParserTest {
-
-    JsonParser parser = new JsonParser();
-
     @Test
     void parseString() {
-        assertEquals("value", parser.parse("\"value\""));
+        assertEquals("value", JsonParser.parse("\"value\""));
+    }
+
+    @Test
+    void parseDifficultString() {
+        assertEquals("value is Difficult String nr.1 with symbol &"
+                , JsonParser.parse("\"value is Difficult String nr.1 with symbol &\""));
     }
 
     @Test
     void parseNull() {
-        assertNull(parser.parse("null"));
+        assertNull(JsonParser.parse("null"));
     }
 
     @Test
     void parseInteger() {
-        assertEquals(-101, parser.parse("-101"));
+        assertEquals(-101, JsonParser.parse("-101"));
     }
 
     @Test
     void parseDouble() {
-        assertEquals(-333.1457, parser.parse("-333.1457"));
+        assertEquals(-333.1457, JsonParser.parse("-333.1457"));
     }
 
     @Test
     void parseTrueBoolean() {
-        assertEquals(true, parser.parse("true"));
+        assertEquals(true, JsonParser.parse("true"));
     }
 
     @Test
     void parseFalseBoolean() {
-        assertEquals(false, parser.parse("false"));
+        assertEquals(false, JsonParser.parse("false"));
     }
 
     @Test
     void parseList() {
-        assertEquals(List.of(1, 2, 3), parser.parse("[1, 2, 3]"));
+        assertEquals(List.of(1, 2, 3), JsonParser.parse("[1, 2, 3]"));
     }
 
 
