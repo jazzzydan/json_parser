@@ -9,8 +9,6 @@ public class JsonParser {
     private Reader input;
     private char c;
 
-    //todo: rethink functionality for external char c
-
     public JsonParser(Reader input) {
         this.input = input;
     }
@@ -25,42 +23,65 @@ public class JsonParser {
 
     public Object parse() throws IOException {
         var read = input.read();
-        var c = (char) read;
+        c = (char) read;
         while (read != -1) {
-            if (Character.isWhitespace(c)) continue;
-//            else if (c == '{') return readObject(input);
-            else if (c == '[') return readList(input);
-            else if (c == '"') return readString(input);
-            else if (Character.isDigit(c) || c == '-') return readNumber(input, c);
-            else if (c == 't' || c == 'f') return readBoolean(input, c);
-            else if (c == 'n') return readNull(input);
+            while (Character.isWhitespace(c)) {
+                c = (char) input.read();
+            }
+            if (c == '{') return readObject();
+            else if (c == '[') return readList();
+            else if (c == '"') return readString();
+            else if (Character.isDigit(c) || c == '-') return readNumber();
+            else if (c == 't' || c == 'f') return readBoolean();
+            else if (c == 'n') return readNull();
             else throw new IllegalArgumentException("Unexpected character: " + (char) c);
         }
         throw new IllegalArgumentException("Unexpected end");
-
     }
 
-    private List<Object> readList(Reader input) throws IOException {
-        List<Object> list = new ArrayList<>();
-        char c = (char) input.read();
 
-        while (c != ']') {
-            Object parsed = parse();
-            if (c == ',') {
-
-                 list.add(parsed);
-
+    private Map<String, Object> readObject() throws IOException {
+        Map<String, Object> map = new LinkedHashMap<>();
+        c = (char) input.read();
+        skipNewLineOrWhitespace();
+        while (c != '}') {
+            String key = readString();
+            if (c != ':') throw new IllegalArgumentException("Expected ':' after key");
+            Object value = parse();
+            map.put(key, value);
+            if (c != ',' && c != '}') {
+                throw new IllegalArgumentException("Expected ',' or '}' after value");
             }
             c = (char) input.read();
+            if (c == '\n') c = (char) input.read();
+        }
+        return map;
+    }
+
+    private void skipNewLineOrWhitespace() throws IOException {
+        do {
+            c = (char) input.read();
+        } while (c == '\n' || Character.isWhitespace(c));
+    }
+
+
+    private List<Object> readList() throws IOException {
+        List<Object> list = new ArrayList<>();
+        while (c != ']') {
+            Object parsed = parse();
+            list.add(parsed);
+            if (c == ',') {
+                c = (char) input.read();
+            }
         }
         return list;
     }
 
-    private Number readNumber(Reader input, char firstChar) throws IOException {
+    private Number readNumber() throws IOException {
         StringBuilder numberString = new StringBuilder();
-        numberString.append(firstChar);
-        boolean hasDecimalPoint = (firstChar == '.');
-        char c = (char) input.read();
+        numberString.append(c);
+        boolean hasDecimalPoint = (c == '.');
+        c = (char) input.read();
         while (Character.isDigit(c) || c == '.') {
             if (c == '.') {
                 if (hasDecimalPoint) {
@@ -78,31 +99,30 @@ public class JsonParser {
         }
     }
 
-    private String readString(Reader input) throws IOException {
+    private String readString() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
-        char c = (char) input.read();
+        c = (char) input.read();
         while (c != '"') {
             stringBuilder.append(c);
             c = (char) input.read();
         }
+        c = (char) input.read();
         return stringBuilder.toString();
     }
 
-    private Boolean readBoolean(Reader input, char firstChar) throws IOException {
+    private Boolean readBoolean() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(firstChar);
-        char c = (char) input.read();
-        while (Character.isAlphabetic(c)) {
+        do {
             stringBuilder.append(c);
             c = (char) input.read();
-        }
+        } while (Character.isAlphabetic(c));
         String value = stringBuilder.toString();
         if (value.equals("true")) return true;
         else if (value.equals("false")) return false;
-        else throw new IOException("Invalid boolean value: " + value);
+        else throw new IllegalArgumentException("Invalid boolean value: " + value);
     }
 
-    private Objects readNull(Reader input) throws IOException {
+    private Objects readNull() throws IOException {
         if (input.read() == 'u') {
             if (input.read() == 'l') {
                 if (input.read() == 'l') {
