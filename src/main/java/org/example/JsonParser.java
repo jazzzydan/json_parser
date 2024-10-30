@@ -43,25 +43,31 @@ public class JsonParser {
     private Map<String, Object> readObject() throws IOException {
         Map<String, Object> map = new LinkedHashMap<>();
         c = (char) input.read();
-        skipNewLineOrWhitespace();
+
         while (c != '}') {
+            skipNewLineOrWhitespace();
             String key = readString();
             if (c != ':') throw new IllegalArgumentException("Expected ':' after key");
             Object value = parse();
             map.put(key, value);
-            if (c != ',' && c != '}') {
+            skipNewLineOrWhitespace();
+            if (c == ',') {
+                c = (char) input.read();
+                continue;
+            }
+            if (c != '}') {
                 throw new IllegalArgumentException("Expected ',' or '}' after value");
             }
-            c = (char) input.read();
-            if (c == '\n') c = (char) input.read();
+
+            skipNewLineOrWhitespace();
         }
         return map;
     }
 
     private void skipNewLineOrWhitespace() throws IOException {
-        do {
+        while (c == '\n' || Character.isWhitespace(c)) {
             c = (char) input.read();
-        } while (c == '\n' || Character.isWhitespace(c));
+        }
     }
 
 
@@ -123,9 +129,14 @@ public class JsonParser {
     }
 
     private Objects readNull() throws IOException {
-        if (input.read() == 'u') {
-            if (input.read() == 'l') {
-                if (input.read() == 'l') {
+        c = (char) input.read();
+        if (c == 'u') {
+            c = (char) input.read();
+            if (c == 'l') {
+                c = (char) input.read();
+                if (c == 'l') {
+                    c = (char) input.read();
+                    skipNewLineOrWhitespace();
                     return null;
                 }
             }
