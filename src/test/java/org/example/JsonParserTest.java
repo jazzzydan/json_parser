@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JsonParserTest {
 
-    //TODO: excemption testing
+    //TODO: exception testing, nested objects, nested lists, empty list, empty object
 
     @Test
     void parseString() {
@@ -79,54 +79,4 @@ class JsonParserTest {
         Object result = JsonParser.parse(json);
         assertEquals(expectedMap, result);
     }
-
-//    @Test
-//    void validate() {
-//        assertTrue(parser.isValidJson("{\n\"key\": \"string\"\n}"));
-//        assertFalse(parser.isValidJson("{\n\"key\": \"string\"\n"));
-//    }
-//
-//    @Test
-//    void trim() {
-//        // language=json
-//        String json = """
-//                {
-//                  "key 1": "value with spaces",
-//                  "key 2": true,
-//                  "key 3": null
-//                }""";
-//        assertEquals("\"key 1\":\"value with spaces\",\"key 2\":true,\"key 3\":null", parser.trim(json));
-//    }
-//
-//    @Test
-//    void split() {
-//        String json = "\"key 1\":\"value with spaces\",\"key 2\":true,\"key 3\":null";
-//        String[] expected = {"\"key 1\":\"value with spaces\"", "\"key 2\":true", "\"key 3\":null"};
-//        assertArrayEquals(expected, parser.split(json));
-
-//    }
-//    @Test
-//    void jsonToMap() {
-//        String[] keyValuePairs = {
-//                "\"key 1\":\"value with spaces\"",
-//                "\"key 2\":true",
-//                "\"key 3\":null"
-//        };
-//        Map<String, Object> expectedMap = Map.of(
-//                "\"key 1\"", "value with spaces",
-//                "\"key 2\"", "true",
-//                "\"key 3\"", "null"
-//        );
-//
-//        Map<String, Object> result = parser.jsonToMap(keyValuePairs);
-//        assertEquals(expectedMap, result);
-
-//    }
-//    @Test
-//    void stringValue() {
-//        String[] keyValuePairs = {"\"key\":\"string\""};
-//        assertEquals("string", parser.jsonToMap(keyValuePairs).get("\"key\""));
-
-//    }
-
 }

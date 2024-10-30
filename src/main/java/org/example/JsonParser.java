@@ -34,11 +34,10 @@ public class JsonParser {
             else if (Character.isDigit(c) || c == '-') return readNumber();
             else if (c == 't' || c == 'f') return readBoolean();
             else if (c == 'n') return readNull();
-            else throw new IllegalArgumentException("Unexpected character: " + (char) c);
+            else throw new IllegalArgumentException("Unexpected character: " + c);
         }
         throw new IllegalArgumentException("Unexpected end");
     }
-
 
     private Map<String, Object> readObject() throws IOException {
         Map<String, Object> map = new LinkedHashMap<>();
@@ -58,7 +57,6 @@ public class JsonParser {
             if (c != '}') {
                 throw new IllegalArgumentException("Expected ',' or '}' after value");
             }
-
             skipNewLineOrWhitespace();
         }
         return map;
@@ -70,7 +68,6 @@ public class JsonParser {
         }
     }
 
-
     private List<Object> readList() throws IOException {
         List<Object> list = new ArrayList<>();
         while (c != ']') {
@@ -78,6 +75,8 @@ public class JsonParser {
             list.add(parsed);
             if (c == ',') {
                 c = (char) input.read();
+            } else if (c != ']') {
+                throw new IllegalArgumentException("Expected ',' or ']' after value in array");
             }
         }
         return list;
@@ -98,6 +97,12 @@ public class JsonParser {
             numberString.append(c);
             c = (char) input.read();
         }
+        if (numberString.length() == 1 && numberString.charAt(0) == '-') {
+            throw new IllegalArgumentException("Invalid number format: lone minus sign");
+        }
+        if (!numberString.toString().matches("-?\\d+(\\.\\d+)?")) {
+            throw new IllegalArgumentException("Invalid number format: " + numberString.toString());
+        }
         if (hasDecimalPoint) {
             return Double.valueOf(numberString.toString());
         } else {
@@ -109,6 +114,9 @@ public class JsonParser {
         StringBuilder stringBuilder = new StringBuilder();
         c = (char) input.read();
         while (c != '"') {
+            if (c == -1) {
+                throw new IllegalArgumentException("Unexpected end of input while reading string");
+            }
             stringBuilder.append(c);
             c = (char) input.read();
         }
@@ -141,95 +149,8 @@ public class JsonParser {
                 }
             }
         }
-        throw new IllegalArgumentException("Unexpected character: " + (char) input.read());
+        throw new IllegalArgumentException("Unexpected character: " + c);
     }
-
 }
-//    String trim(String json) {
-//        String singleLineJson = stringifyJson(json);
-//        singleLineJson = removeWrapper(singleLineJson);
-//        StringBuilder trimmed = new StringBuilder();
-//        boolean inQuotes = false;
-//
-//        for (int index = 0; index < singleLineJson.length(); index++) {
-//            char currentChar = singleLineJson.charAt(index);
-//
-//            if (currentChar == '"') {
-//                inQuotes = !inQuotes;
-//                trimmed.append(currentChar);
-//            } else if (currentChar != ' ') {
-//                trimmed.append(currentChar);
-//            } else if (inQuotes) {
-//                trimmed.append(currentChar);
-//            }
-//        }
-//        return trimmed.toString();
-//    }
-//
-//    String stringifyJson(String json) {
-//        return json.replaceAll("\\s+", " ").trim();
-//    }
-//
-//    String removeWrapper(String singleLineJson) {
-//        return singleLineJson.substring(1, singleLineJson.length() - 1).trim();
-//    }
-//
-//    String[] split(String trimmedJson) {
-//        return trimmedJson.split(",");
-//    }
 
-
-//    public Object parse(Reader input) {
-//
-//        return null;
-//    }
-//
-//    public Object parse(String input) {
-//        return new StringReader(input);
-
-//        if (!isValidJson(json)) {
-//            throw new IllegalArgumentException("Invalid JSON format");
-//        }
-//
-//        String trimmedJson = trim(json);
-//        String[] keyValuePairs = split(trimmedJson);
-//        Map<String, Object> jsonMap = jsonToMap(keyValuePairs);
-//
-//        System.out.println(jsonMap.keySet());
-//
-//
-//    private String parseString(String input) {
-//        StringBuilder output = new StringBuilder();
-//        for (int index = 0; index < input.length(); index++) {
-//            char currentChar = input.charAt(index);
-//            if (currentChar != '"') { output.append(currentChar); }
-//        }
-//        return output.toString();
-//    }
-//
-//    boolean isValidJson(String json) {
-//        if (hasProperWrapper(json)) {
-//            return true;
-//        }
-//        return false;
-
-//    }
-//
-//    boolean hasProperWrapper(String json) {
-//        int index = 0;
-//        return json.charAt(index) == '{' && json.charAt(json.length() - 1) == '}';
-//    }
-
-
-//    Map<String, Object> jsonToMap(String[] keyValuePairs) {
-//        Map<String, Object> jsonMap = new HashMap<>();
-//        for (String keyValuePair : keyValuePairs) {
-//            String[] keyValue = keyValuePair.split(":");
-//            String key = keyValue[0].trim();
-//            Object value = keyValue[1].trim();
-//            jsonMap.put(key, value);
-//        }
-//
-//        return jsonMap;
-//    }
 
