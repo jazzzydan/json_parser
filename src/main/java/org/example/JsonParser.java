@@ -24,7 +24,7 @@ public class JsonParser {
     public Object parse() throws IOException {
         var read = input.read();
         c = (char) read;
-        while (read != -1) {
+        while (c != -1) {
             while (Character.isWhitespace(c)) {
                 c = (char) input.read();
             }
@@ -58,9 +58,8 @@ public class JsonParser {
             if (c != '}') {
                 throw new IllegalArgumentException("Expected ',' or '}' after value");
             }
-
-            skipNewLineOrWhitespace();
         }
+        c = (char) input.read();
         return map;
     }
 
@@ -69,7 +68,6 @@ public class JsonParser {
             c = (char) input.read();
         }
     }
-
 
     private List<Object> readList() throws IOException {
         List<Object> list = new ArrayList<>();
@@ -80,6 +78,7 @@ public class JsonParser {
                 c = (char) input.read();
             }
         }
+        c = (char) input.read();
         return list;
     }
 
@@ -143,93 +142,6 @@ public class JsonParser {
         }
         throw new IllegalArgumentException("Unexpected character: " + (char) input.read());
     }
-
 }
-//    String trim(String json) {
-//        String singleLineJson = stringifyJson(json);
-//        singleLineJson = removeWrapper(singleLineJson);
-//        StringBuilder trimmed = new StringBuilder();
-//        boolean inQuotes = false;
-//
-//        for (int index = 0; index < singleLineJson.length(); index++) {
-//            char currentChar = singleLineJson.charAt(index);
-//
-//            if (currentChar == '"') {
-//                inQuotes = !inQuotes;
-//                trimmed.append(currentChar);
-//            } else if (currentChar != ' ') {
-//                trimmed.append(currentChar);
-//            } else if (inQuotes) {
-//                trimmed.append(currentChar);
-//            }
-//        }
-//        return trimmed.toString();
-//    }
-//
-//    String stringifyJson(String json) {
-//        return json.replaceAll("\\s+", " ").trim();
-//    }
-//
-//    String removeWrapper(String singleLineJson) {
-//        return singleLineJson.substring(1, singleLineJson.length() - 1).trim();
-//    }
-//
-//    String[] split(String trimmedJson) {
-//        return trimmedJson.split(",");
-//    }
 
-
-//    public Object parse(Reader input) {
-//
-//        return null;
-//    }
-//
-//    public Object parse(String input) {
-//        return new StringReader(input);
-
-//        if (!isValidJson(json)) {
-//            throw new IllegalArgumentException("Invalid JSON format");
-//        }
-//
-//        String trimmedJson = trim(json);
-//        String[] keyValuePairs = split(trimmedJson);
-//        Map<String, Object> jsonMap = jsonToMap(keyValuePairs);
-//
-//        System.out.println(jsonMap.keySet());
-//
-//
-//    private String parseString(String input) {
-//        StringBuilder output = new StringBuilder();
-//        for (int index = 0; index < input.length(); index++) {
-//            char currentChar = input.charAt(index);
-//            if (currentChar != '"') { output.append(currentChar); }
-//        }
-//        return output.toString();
-//    }
-//
-//    boolean isValidJson(String json) {
-//        if (hasProperWrapper(json)) {
-//            return true;
-//        }
-//        return false;
-
-//    }
-//
-//    boolean hasProperWrapper(String json) {
-//        int index = 0;
-//        return json.charAt(index) == '{' && json.charAt(json.length() - 1) == '}';
-//    }
-
-
-//    Map<String, Object> jsonToMap(String[] keyValuePairs) {
-//        Map<String, Object> jsonMap = new HashMap<>();
-//        for (String keyValuePair : keyValuePairs) {
-//            String[] keyValue = keyValuePair.split(":");
-//            String key = keyValue[0].trim();
-//            Object value = keyValue[1].trim();
-//            jsonMap.put(key, value);
-//        }
-//
-//        return jsonMap;
-//    }
 

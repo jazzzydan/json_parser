@@ -80,53 +80,35 @@ class JsonParserTest {
         assertEquals(expectedMap, result);
     }
 
-//    @Test
-//    void validate() {
-//        assertTrue(parser.isValidJson("{\n\"key\": \"string\"\n}"));
-//        assertFalse(parser.isValidJson("{\n\"key\": \"string\"\n"));
-//    }
-//
-//    @Test
-//    void trim() {
-//        // language=json
-//        String json = """
-//                {
-//                  "key 1": "value with spaces",
-//                  "key 2": true,
-//                  "key 3": null
-//                }""";
-//        assertEquals("\"key 1\":\"value with spaces\",\"key 2\":true,\"key 3\":null", parser.trim(json));
-//    }
-//
-//    @Test
-//    void split() {
-//        String json = "\"key 1\":\"value with spaces\",\"key 2\":true,\"key 3\":null";
-//        String[] expected = {"\"key 1\":\"value with spaces\"", "\"key 2\":true", "\"key 3\":null"};
-//        assertArrayEquals(expected, parser.split(json));
+    @Test
+    void mixedTestType() {
+        Map<String, Object> expectedMap = new LinkedHashMap<>();
 
-//    }
+        Map<String, Object> employee = new LinkedHashMap<>();
+        employee.put("id", 34);
+        employee.put("shoe size", 56.6);
+        employee.put("name", "Johnson Burger");
+        employee.put("skills", List.of("Flipping", "Cleaning", "Fork master"));
+        employee.put("department", "Hamburger engineer");
+        expectedMap.put("employee", employee);
+        expectedMap.put("isFullTime", true);
+
+        assertEquals(expectedMap, JsonParser.parse("""
+            {
+                "employee": {
+                    "id": 34,
+                    "shoe size": 56.6,
+                    "name": "Johnson Burger",
+                    "skills": ["Flipping", "Cleaning", "Fork master"],
+                    "department": "Hamburger engineer"
+                },
+                "isFullTime": true
+            }
+            """));
+    }
+
 //    @Test
-//    void jsonToMap() {
-//        String[] keyValuePairs = {
-//                "\"key 1\":\"value with spaces\"",
-//                "\"key 2\":true",
-//                "\"key 3\":null"
-//        };
-//        Map<String, Object> expectedMap = Map.of(
-//                "\"key 1\"", "value with spaces",
-//                "\"key 2\"", "true",
-//                "\"key 3\"", "null"
-//        );
-//
-//        Map<String, Object> result = parser.jsonToMap(keyValuePairs);
-//        assertEquals(expectedMap, result);
-
+//    void correctInput() {
+//        assertThrows(IllegalArgumentException.class,() -> JsonParser.parse("\"value\""));
 //    }
-//    @Test
-//    void stringValue() {
-//        String[] keyValuePairs = {"\"key\":\"string\""};
-//        assertEquals("string", parser.jsonToMap(keyValuePairs).get("\"key\""));
-
-//    }
-
 }
