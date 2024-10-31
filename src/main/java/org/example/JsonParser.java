@@ -5,6 +5,11 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.*;
 
+import static java.lang.Character.isDigit;
+import static java.lang.Character.isWhitespace;
+import static java.lang.Double.parseDouble;
+import static java.lang.Integer.parseInt;
+
 public class JsonParser {
     private final Reader input;
     private char c;
@@ -13,8 +18,13 @@ public class JsonParser {
         this.input = input;
     }
 
+    /*
+    The try-with-resources statement ensures that the StringReader is closed automatically
+    after the block is executed, even if an exception occurs. This is important for resource
+    management and avoiding memory leaks.
+    */
     public static Object parse(String input) {
-        try (var reader = new StringReader(input)) { // TODO: tell others about it
+        try (var reader = new StringReader(input)) {
             return new JsonParser(reader).parse();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -23,11 +33,11 @@ public class JsonParser {
 
     public Object parse() throws IOException {
         while ((c = (char) input.read()) < Character.MAX_VALUE) {
-            if (Character.isWhitespace(c)) continue;
+            if (isWhitespace(c)) continue;
             if (c == '{') return readObject();
             else if (c == '[') return readList();
             else if (c == '"') return readString();
-            else if (Character.isDigit(c) || c == '-') return readNumber();
+            else if (isDigit(c) || c == '-') return readNumber();
             else if (c == 't' || c == 'f') return readBoolean();
             else if (c == 'n') return readNull();
             else throw new IllegalArgumentException("Unexpected character: " + c);
@@ -38,7 +48,7 @@ public class JsonParser {
 
     private Map<String, Object> readObject() throws IOException {
         Map<String, Object> map = new LinkedHashMap<>();
-        c = (char) input.read();
+        readNextChar();
 
         while (c != '}') {
             checkUnexpectedEndOfInput("Object");
@@ -49,15 +59,26 @@ public class JsonParser {
             map.put(key, value);
             skipNewLineOrWhitespace();
             if (c == ',') {
-                c = (char) input.read();
+                readNextChar();
                 continue;
             }
             if (c != '}') {
                 throw new IllegalArgumentException("Expected ',' or '}' after value");
             }
         }
-        c = (char) input.read();
+        readNextChar();
         return map;
+    }
+
+    // TODO: maybe return char
+    private void readNextChar() throws IOException {
+        c = (char) input.read();
+    }
+
+    private String readNextChars(int count) throws IOException {
+        var chars = new char[count];
+        input.read(chars);
+        return new String(chars);
     }
 
     private void checkUnexpectedEndOfInput(String forObjectType) {
@@ -68,8 +89,8 @@ public class JsonParser {
     }
 
     private void skipNewLineOrWhitespace() throws IOException {
-        while (c == '\n' || Character.isWhitespace(c)) {
-            c = (char) input.read();
+        while (c == '\n' || isWhitespace(c)) {
+            readNextChar();
         }
     }
 
@@ -79,52 +100,50 @@ public class JsonParser {
             Object parsed = parse();
             list.add(parsed);
             if (c == ',') {
-                c = (char) input.read();
+                readNextChar();
             } else if (c != ']') {
                 throw new IllegalArgumentException("Expected ',' or ']' after value in array");
             }
         }
-        c = (char) input.read();
+        readNextChar();
         return list;
     }
 
     private Number readNumber() throws IOException {
-        StringBuilder numberString = new StringBuilder();
+        var numberString = new StringBuilder();
         numberString.append(c);
-        boolean hasDecimalPoint = (c == '.');
-        c = (char) input.read();
-        while (Character.isDigit(c) || c == '.') {
-            if (c == '.') {
-                if (hasDecimalPoint) {
+        readNextChar();
+        boolean numberHasDecimalPoint = isDecimalPoint(c);
+        while (isDigit(c) || isDecimalPoint(c)) {
+            if (isDecimalPoint(c)) {
+                if (numberHasDecimalPoint) {
                     throw new IllegalArgumentException("Invalid number format: multiple decimal points");
                 }
-                hasDecimalPoint = true;
+                numberHasDecimalPoint = true;
             }
             numberString.append(c);
-            c = (char) input.read();
+            readNextChar();
         }
-        if (numberString.length() == 1 && numberString.charAt(0) == '-') {
-            throw new IllegalArgumentException("Invalid number format: lone minus sign");
-        }
-        if (!numberString.toString().matches("-?\\d+(\\.\\d+)?")) {
-            throw new IllegalArgumentException("Invalid number format: " + numberString.toString());
-        }
-        if (hasDecimalPoint) {
-            return Double.valueOf(numberString.toString());
+        if (numberHasDecimalPoint) {
+            return parseDouble(numberString.toString());
         } else {
-            return Integer.valueOf(numberString.toString());
+            return parseInt(numberString.toString());
         }
+    }
+
+    private boolean isDecimalPoint(char c) {
+        return c == '.';
     }
 
     private String readString() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
-        c = (char) input.read();
+        readNextChar();
         while (c != '"') {
             checkUnexpectedEndOfInput("String");
             stringBuilder.append(c);
-            c = (char) input.read();
+            readNextChar();
         }
-        c = (char) input.read();
+        readNextChar();
         return stringBuilder.toString();
     }
 
@@ -132,7 +151,7 @@ public class JsonParser {
         StringBuilder stringBuilder = new StringBuilder();
         do {
             stringBuilder.append(c);
-            c = (char) input.read();
+            readNextChar();
         } while (Character.isAlphabetic(c));
         String value = stringBuilder.toString();
         if (value.equals("true")) return true;
@@ -141,20 +160,13 @@ public class JsonParser {
     }
 
     private Objects readNull() throws IOException {
-        c = (char) input.read();
-        if (c == 'u') {
-            c = (char) input.read();
-            if (c == 'l') {
-                c = (char) input.read();
-                if (c == 'l') {
-                    c = (char) input.read();
-                    skipNewLineOrWhitespace();
-                    return null;
-                }
-            }
+
+        var ull = readNextChars(3);
+        if (ull.equals("ull")) {
+            readNextChar();
+            skipNewLineOrWhitespace();
+            return null;
         }
         throw new IllegalArgumentException("Unexpected character: " + c);
     }
 }
-
-
