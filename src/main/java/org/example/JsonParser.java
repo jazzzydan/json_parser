@@ -41,6 +41,7 @@ public class JsonParser {
         c = (char) input.read();
 
         while (c != '}') {
+            checkUnexpectedEndOfInput("Object");
             skipNewLineOrWhitespace();
             String key = readString();
             if (c != ':') throw new IllegalArgumentException("Expected ':' after key");
@@ -59,6 +60,13 @@ public class JsonParser {
         return map;
     }
 
+    private void checkUnexpectedEndOfInput(String forObjectType) {
+        String message = "Unexpected end of input while reading " + forObjectType;
+        if (c == Character.MAX_VALUE) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
     private void skipNewLineOrWhitespace() throws IOException {
         while (c == '\n' || Character.isWhitespace(c)) {
             c = (char) input.read();
@@ -72,6 +80,8 @@ public class JsonParser {
             list.add(parsed);
             if (c == ',') {
                 c = (char) input.read();
+            } else if (c != ']') {
+                throw new IllegalArgumentException("Expected ',' or ']' after value in array");
             }
         }
         c = (char) input.read();
@@ -86,12 +96,18 @@ public class JsonParser {
         while (Character.isDigit(c) || c == '.') {
             if (c == '.') {
                 if (hasDecimalPoint) {
-                    throw new IOException("Invalid number format: multiple decimal points");
+                    throw new IllegalArgumentException("Invalid number format: multiple decimal points");
                 }
                 hasDecimalPoint = true;
             }
             numberString.append(c);
             c = (char) input.read();
+        }
+        if (numberString.length() == 1 && numberString.charAt(0) == '-') {
+            throw new IllegalArgumentException("Invalid number format: lone minus sign");
+        }
+        if (!numberString.toString().matches("-?\\d+(\\.\\d+)?")) {
+            throw new IllegalArgumentException("Invalid number format: " + numberString.toString());
         }
         if (hasDecimalPoint) {
             return Double.valueOf(numberString.toString());
@@ -104,6 +120,7 @@ public class JsonParser {
         StringBuilder stringBuilder = new StringBuilder();
         c = (char) input.read();
         while (c != '"') {
+            checkUnexpectedEndOfInput("String");
             stringBuilder.append(c);
             c = (char) input.read();
         }
@@ -136,7 +153,7 @@ public class JsonParser {
                 }
             }
         }
-        throw new IllegalArgumentException("Unexpected character: " + (char) input.read());
+        throw new IllegalArgumentException("Unexpected character: " + c);
     }
 }
 

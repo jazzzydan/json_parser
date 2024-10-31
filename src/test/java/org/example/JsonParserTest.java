@@ -1,6 +1,5 @@
 package org.example;
 
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -10,8 +9,6 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JsonParserTest {
-
-    //TODO: exception testing
 
     @Test
     void parseString() {
@@ -81,7 +78,7 @@ class JsonParserTest {
     }
 
     @Test
-    void mixedTestType() {
+    void parseMultilayerObject() {
         Map<String, Object> expectedMap = new LinkedHashMap<>();
 
         Map<String, Object> employee = new LinkedHashMap<>();
@@ -92,29 +89,89 @@ class JsonParserTest {
         employee.put("department", "Hamburger engineer");
         expectedMap.put("employee", employee);
         expectedMap.put("isFullTime", true);
-
+        // language=json
         assertEquals(expectedMap, JsonParser.parse("""
-            {
-                "employee": {
-                    "id": 34,
-                    "shoe size": 56.6,
-                    "name": "Johnson Burger",
-                    "skills": ["Flipping", "Cleaning", "Fork master"],
-                    "department": "Hamburger engineer"
-                },
-                "isFullTime": true
-            }
-            """));
+                {
+                    "employee": {
+                        "id": 34,
+                        "shoe size": 56.6,
+                        "name": "Johnson Burger",
+                        "skills": ["Flipping", "Cleaning", "Fork master"],
+                        "department": "Hamburger engineer"
+                    },
+                    "isFullTime": true
+                }
+                """));
     }
 
     @Test
     void unfinishedJson() {
-        assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("    "), "Unexpected end");
-        assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("{"));
+        assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("   "), "Unexpected end");
+        assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("{  "));
     }
 
-    //    @Test
-//    void correctInput() {
-//        assertThrows(IllegalArgumentException.class,() -> JsonParser.parse("\"value\""));
-//    }
-}
+    @Test
+    void correctObjectInput() {
+        assertThrows(IllegalArgumentException.class, () ->
+                JsonParser.parse("{\"key 1\" \"value with spaces\"}"),
+                "Expected ':' after key");
+        assertThrows(IllegalArgumentException.class, () ->
+                JsonParser.parse("{\"key 1\": \"value with spaces\""),
+                "Expected ',' or '}' after value");
+    }
+
+    @Test
+    void correctListInput() {
+        assertThrows(IllegalArgumentException.class, () ->
+                JsonParser.parse("[1.17, 2.59, -66.77 100.99]"),
+                "Expected ',' or ']' after value in array");
+    }
+
+    @Test
+    void correctNumberInput() {
+        assertThrows(IllegalArgumentException.class, () ->
+                JsonParser.parse("-333.14.57"),
+                "Invalid number format: multiple decimal points");
+        assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("-"),
+                "Invalid number format: lone minus sign");
+        assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("-34.eeee"),
+                "Invalid number format: -34.");
+    }
+
+    @Test
+    void correctStringInput() {
+        assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("\"value"),
+                "Unexpected end of input while reading String");
+    }
+
+    @Test
+    void correctBooleanInput() {
+        assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("truu"),
+                "Invalid boolean value: truu");
+    }
+
+    @Test
+    void correctNullInput() {
+        assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("nuul"),
+                "Unexpected character: u");
+    }
+
+    @Test
+    void unexpectedCharacterDuringParse() {
+        assertThrows(IllegalArgumentException.class, () ->
+                JsonParser.parse("z"),
+                "Unexpected character: z");
+    }
+
+    @Test
+    void parseInvalidJsonThrowsRuntimeException() {
+        assertThrows(RuntimeException.class, () ->
+                JsonParser.parse("{ key: 'value' }"));
+    }
+
+    }
