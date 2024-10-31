@@ -6,7 +6,7 @@ import java.io.StringReader;
 import java.util.*;
 
 public class JsonParser {
-    private Reader input;
+    private final Reader input;
     private char c;
 
     public JsonParser(Reader input) {
@@ -14,27 +14,23 @@ public class JsonParser {
     }
 
     public static Object parse(String input) {
-        try {
-            return new JsonParser(new StringReader(input)).parse();
+        try (var reader = new StringReader(input)) { // TODO: tell others about it
+            return new JsonParser(reader).parse();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public Object parse() throws IOException {
-        var read = input.read();
-        c = (char) read;
-        while (c != -1) {
-            while (Character.isWhitespace(c)) {
-                c = (char) input.read();
-            }
+        while ((c = (char) input.read()) < Character.MAX_VALUE) {
+            if (Character.isWhitespace(c)) continue;
             if (c == '{') return readObject();
             else if (c == '[') return readList();
             else if (c == '"') return readString();
             else if (Character.isDigit(c) || c == '-') return readNumber();
             else if (c == 't' || c == 'f') return readBoolean();
             else if (c == 'n') return readNull();
-            else throw new IllegalArgumentException("Unexpected character: " + (char) c);
+            else throw new IllegalArgumentException("Unexpected character: " + c);
         }
         throw new IllegalArgumentException("Unexpected end");
     }

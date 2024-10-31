@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JsonParserTest {
 
-    //TODO: excemption testing
+    //TODO: exception testing
 
     @Test
     void parseString() {
@@ -20,8 +20,8 @@ class JsonParserTest {
 
     @Test
     void parseDifficultString() {
-        assertEquals("value is Difficult String nr.1 with symbol &"
-                , JsonParser.parse("\"value is Difficult String nr.1 with symbol &\""));
+        assertEquals("value is Difficult String nr.1 with symbol &",
+                JsonParser.parse("\"value is Difficult String nr.1 with symbol &\""));
     }
 
     @Test
@@ -107,7 +107,13 @@ class JsonParserTest {
             """));
     }
 
-//    @Test
+    @Test
+    void unfinishedJson() {
+        assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("    "), "Unexpected end");
+        assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("{"));
+    }
+
+    //    @Test
 //    void correctInput() {
 //        assertThrows(IllegalArgumentException.class,() -> JsonParser.parse("\"value\""));
 //    }
