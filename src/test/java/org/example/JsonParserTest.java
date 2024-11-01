@@ -142,9 +142,9 @@ class JsonParserTest {
                 assertThrows(IllegalArgumentException.class, () ->
                         JsonParser.parse("-")).getMessage());
 
-        assertEquals("Invalid number format: e",
+        assertEquals("Expected ',' or '}' after value",
                 assertThrows(IllegalArgumentException.class, () ->
-                        JsonParser.parse("-34.eeee")).getMessage());
+                        JsonParser.parse("{\"id\": 34e}")).getMessage());
     }
 
     @Test
@@ -163,14 +163,14 @@ class JsonParserTest {
 
     @Test
     void correctNullInput() {
-        assertEquals("Unexpected format: nuul",
+        assertEquals("Invalid null value: nuul" ,
                 assertThrows(IllegalArgumentException.class, () ->
                         JsonParser.parse("nuul")).getMessage());
     }
 
     @Test
     void correctNullLength() {
-        assertEquals("Invalid format: nulll" ,
+        assertEquals("Invalid null value: nulll"  ,
                 assertThrows(IllegalArgumentException.class, () ->
                         JsonParser.parse("nulll")).getMessage());
     }

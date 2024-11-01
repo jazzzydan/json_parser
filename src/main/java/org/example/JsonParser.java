@@ -13,7 +13,6 @@ import static java.lang.Integer.parseInt;
 public class JsonParser {
     private final Reader input;
     private char c;
-    Set<Character> validEndOfValue = new HashSet<>(Set.of('}', ',', ']', '\n', ' ', Character.MAX_VALUE));
 
     public JsonParser(Reader input) {
         this.input = input;
@@ -75,12 +74,6 @@ public class JsonParser {
         c = (char) input.read();
     }
 
-    private String readNextChars(int count) throws IOException {
-        var chars = new char[count];
-        input.read(chars);
-        return new String(chars);
-    }
-
     private void checkUnexpectedEndOfInput(String forObjectType) {
         String message = "Unexpected end of input while reading " + forObjectType;
         if (c == Character.MAX_VALUE) {
@@ -129,9 +122,6 @@ public class JsonParser {
             readNextChar();
         }
 
-        if (!validEndOfValue.contains(c)) {
-            throw new IllegalArgumentException("Invalid number format: " + c);
-        }
         if (numberHasDecimalPoint) {
             return parseDouble(numberString.toString());
         } else {
@@ -168,15 +158,14 @@ public class JsonParser {
     }
 
     private Objects readNull() throws IOException {
-        var ull = readNextChars(3);
-        if (ull.equals("ull")) {
+
+        StringBuilder stringBuilder = new StringBuilder();
+        do {
+            stringBuilder.append(c);
             readNextChar();
-            if (!validEndOfValue.contains(c)) {
-                throw new IllegalArgumentException("Invalid format: n" + ull + c);
-            }
-            skipNewLineOrWhitespace();
-            return null;
-        }
-        throw new IllegalArgumentException("Unexpected format: n" + ull);
+        } while (Character.isAlphabetic(c));
+        String value = stringBuilder.toString();
+        if (value.equals("null")) return null;
+        else throw new IllegalArgumentException("Invalid null value: " + value);
     }
 }
