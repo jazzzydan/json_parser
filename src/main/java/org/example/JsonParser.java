@@ -112,8 +112,12 @@ public class JsonParser {
     private Number readNumber() throws IOException {
         var numberString = new StringBuilder();
         numberString.append(c);
-        readNextChar();
+        boolean isNegativeNumber = c == '-';
         boolean numberHasDecimalPoint = isDecimalPoint(c);
+        readNextChar();
+        if (isNegativeNumber && isDecimalPoint(c)) {
+            throw new IllegalArgumentException("Invalid number format: decimal point after minus sign");
+        }
         while (isDigit(c) || isDecimalPoint(c)) {
             if (isDecimalPoint(c)) {
                 if (numberHasDecimalPoint) {
@@ -123,6 +127,11 @@ public class JsonParser {
             }
             numberString.append(c);
             readNextChar();
+        }
+
+        Set<Character> validFollowingChars = new HashSet<>(Set.of(',', ']', '}', '\n', ' ', Character.MAX_VALUE));
+        if (!validFollowingChars.contains(c)) {
+            throw new IllegalArgumentException("Invalid number format: " + c);
         }
         if (numberHasDecimalPoint) {
             return parseDouble(numberString.toString());
@@ -167,6 +176,6 @@ public class JsonParser {
             skipNewLineOrWhitespace();
             return null;
         }
-        throw new IllegalArgumentException("Unexpected character: " + c);
+        throw new IllegalArgumentException("Unexpected end of null: " + ull);
     }
 }

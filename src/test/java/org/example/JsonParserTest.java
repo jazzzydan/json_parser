@@ -107,7 +107,7 @@ class JsonParserTest {
     @Test
     void unfinishedJson() {
         assertEquals("Unexpected end",
-        assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("   ")).getMessage());
+                assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("   ")).getMessage());
         assertThrows(IllegalArgumentException.class, () -> JsonParser.parse("{  "));
     }
 
@@ -117,7 +117,7 @@ class JsonParserTest {
                 assertThrows(IllegalArgumentException.class, () ->
                         JsonParser.parse("{\"key 1\" \"value with spaces\"}")).getMessage());
         assertEquals("Expected ',' or '}' after value",
-        assertThrows(IllegalArgumentException.class, () ->
+                assertThrows(IllegalArgumentException.class, () ->
                         JsonParser.parse("{\"key 1\": \"value with spaces\"")).getMessage());
     }
 
@@ -134,40 +134,44 @@ class JsonParserTest {
                 assertThrows(IllegalArgumentException.class, () ->
                         JsonParser.parse("33.31.457")).getMessage());
 
-        // TODO: explain to others
+        assertEquals("Invalid number format: decimal point after minus sign",
+                assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("-.45")).getMessage());
+
         assertEquals("For input string: \"-\"",
                 assertThrows(IllegalArgumentException.class, () ->
                         JsonParser.parse("-")).getMessage());
-//        assertEquals("Expected ',' or '}' after value",
-//                assertThrows(IllegalArgumentException.class, () ->
-//                        JsonParser.parse("-34.eeee")).getMessage());
+
+        assertEquals("Invalid number format: e",
+                assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("-34.eeee")).getMessage());
     }
 
     @Test
     void correctStringInput() {
-        assertThrows(IllegalArgumentException.class, () ->
-                        JsonParser.parse("\"value"),
-                "Unexpected end of input while reading String");
+        assertEquals("Unexpected end of input while reading String",
+                assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("\"value")).getMessage());
     }
 
     @Test
     void correctBooleanInput() {
-        assertThrows(IllegalArgumentException.class, () ->
-                        JsonParser.parse("truu"),
-                "Invalid boolean value: truu");
+        assertEquals("Invalid boolean value: truu",
+                assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("truu")).getMessage());
     }
 
     @Test
     void correctNullInput() {
-        assertThrows(IllegalArgumentException.class, () ->
-                        JsonParser.parse("nuul"),
-                "Unexpected character: u");
+        assertEquals("Unexpected end of null: uul",
+                assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("nuul")).getMessage());
     }
 
     @Test
     void unexpectedCharacterDuringParse() {
-        assertThrows(IllegalArgumentException.class, () ->
-                        JsonParser.parse("z"),
-                "Unexpected character: z");
+        assertEquals("Unexpected character: z",
+                assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("z")).getMessage());
     }
 }
