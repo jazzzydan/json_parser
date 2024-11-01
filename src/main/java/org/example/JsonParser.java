@@ -13,6 +13,7 @@ import static java.lang.Integer.parseInt;
 public class JsonParser {
     private final Reader input;
     private char c;
+    Set<Character> validEndOfValue = new HashSet<>(Set.of('}', ',', ']', '\n', ' ', Character.MAX_VALUE));
 
     public JsonParser(Reader input) {
         this.input = input;
@@ -70,7 +71,6 @@ public class JsonParser {
         return map;
     }
 
-    // TODO: maybe return char
     private void readNextChar() throws IOException {
         c = (char) input.read();
     }
@@ -129,8 +129,7 @@ public class JsonParser {
             readNextChar();
         }
 
-        Set<Character> validFollowingChars = new HashSet<>(Set.of(',', ']', '}', '\n', ' ', Character.MAX_VALUE));
-        if (!validFollowingChars.contains(c)) {
+        if (!validEndOfValue.contains(c)) {
             throw new IllegalArgumentException("Invalid number format: " + c);
         }
         if (numberHasDecimalPoint) {
@@ -169,13 +168,15 @@ public class JsonParser {
     }
 
     private Objects readNull() throws IOException {
-
         var ull = readNextChars(3);
         if (ull.equals("ull")) {
             readNextChar();
+            if (!validEndOfValue.contains(c)) {
+                throw new IllegalArgumentException("Invalid format: n" + ull + c);
+            }
             skipNewLineOrWhitespace();
             return null;
         }
-        throw new IllegalArgumentException("Unexpected end of null: " + ull);
+        throw new IllegalArgumentException("Unexpected format: n" + ull);
     }
 }

@@ -163,9 +163,16 @@ class JsonParserTest {
 
     @Test
     void correctNullInput() {
-        assertEquals("Unexpected end of null: uul",
+        assertEquals("Unexpected format: nuul",
                 assertThrows(IllegalArgumentException.class, () ->
                         JsonParser.parse("nuul")).getMessage());
+    }
+
+    @Test
+    void correctNullLength() {
+        assertEquals("Invalid format: nulll" ,
+                assertThrows(IllegalArgumentException.class, () ->
+                        JsonParser.parse("nulll")).getMessage());
     }
 
     @Test
